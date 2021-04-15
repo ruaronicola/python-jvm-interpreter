@@ -2,6 +2,10 @@ from .ClassFile import ClassFile
 from .CodeAttr import CodeAttr
 from .Frame import Frame
 
+from prompt_toolkit.widgets import Frame as PTFrame, TextArea
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window
+from prompt_toolkit.layout.layout import Layout
+
 import struct
 import io
 from enum import Enum
@@ -407,7 +411,43 @@ class Machine:
         code = frame.code
         while True:
             inst = Inst(code[frame.ip])
-            #print(frame.ip, inst)
+            
+            parsed_code = parse_code(code)
+
+            container = VSplit([
+                    HSplit([
+                        PTFrame(
+                            HSplit([
+                                TextArea(text=f'Class: {frame.current_class.name()}'),
+                                TextArea(text=f'Method: {frame.current_method.name}'),
+                            ], height=2),
+                            title='Context',
+                        ),
+                        PTFrame(
+                            HSplit([
+                                TextArea(text=insn, style='bold fg:red' if ip==frame.ip else '') for ip, insn in parsed_code.items()
+                            ], height=len(parsed_code) or 1),
+                            title='ByteCode',
+                        ),
+                    ]),
+                    HSplit([
+                        PTFrame(
+                            HSplit([TextArea(text=f'{i}: {v}') for i, v in enumerate(frame.locals)
+                                   ], height=len(frame.locals) or 1),
+                            title='Local Variables Stack',
+                        ),
+                        PTFrame(
+                            HSplit([TextArea(text=f'{i}: {v}') for i, v in enumerate(frame.stack)
+                                   ], height=len(frame.stack) or 1),
+                            title='Operands Stack',
+                        )
+                    ])
+                ])
+            
+            layout = Layout(container)
+            yield layout
+            
+            #print(frame.ip, inst.name)
 
             if len(frame.stack) > frame.max_stack + 1:
                 print("MAX STACK")
