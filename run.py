@@ -10,9 +10,9 @@ from pyjvm.Machine import Machine, LAYOUT_STACK
 from pyjvm.jstdlib.StdlibLoader import load_stdlib_classes
 
 from prompt_toolkit import Application
-from prompt_toolkit.layout.containers import HSplit
-from prompt_toolkit.widgets import Label
-from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.containers import HSplit, VSplit
+from prompt_toolkit.widgets import Label, Frame, TextArea, Box
+from prompt_toolkit.layout import Layout, Dimension, Window
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import get_app
 from prompt_toolkit import prompt
@@ -20,6 +20,8 @@ from prompt_toolkit import prompt
 
 # create the key bindings for prompt_toolkit
 EXECUTION_INDEX = 0
+CONST_POOL_INDEX = 0
+CONST_POOL_PAGES = []
 kb = KeyBindings()
 
 @kb.add('q')
@@ -34,12 +36,18 @@ def exit_(event):
 def goto_start_(event):
     global EXECUTION_INDEX
     
+    if event.app.layout != LAYOUT_STACK[EXECUTION_INDEX]:
+        return
+    
     EXECUTION_INDEX = 0
     event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
     
 @kb.add('G', 'G')
 def goto_end_(event):
     global EXECUTION_INDEX
+    
+    if event.app.layout != LAYOUT_STACK[EXECUTION_INDEX]:
+        return
     
     EXECUTION_INDEX = len(LAYOUT_STACK)-1
     event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
@@ -50,20 +58,57 @@ def start_(event):
     
     event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
     
-@kb.add('down')
-def step_next_(event):
-    global EXECUTION_INDEX
+@kb.add('v')
+def exit_(event):
+    global EXECUTION_INDEX, CONST_POOL_INDEX, CONST_POOL_PAGES
     
-    if EXECUTION_INDEX < len(LAYOUT_STACK)-1:
-        EXECUTION_INDEX += 1
+    if event.app.layout == CONST_POOL_PAGES[CONST_POOL_INDEX]:
         event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
-        
+    else:
+        event.app.layout = CONST_POOL_PAGES[CONST_POOL_INDEX]
+    
+@kb.add('left')
+def page_previous_(event):
+    global CONST_POOL_INDEX, CONST_POOL_PAGES
+    
+    if event.app.layout != CONST_POOL_PAGES[CONST_POOL_INDEX]:
+        return
+    
+    if CONST_POOL_INDEX >= 1:
+        CONST_POOL_INDEX -= 1
+        event.app.layout = CONST_POOL_PAGES[CONST_POOL_INDEX]
+
+@kb.add('right')
+def page_next_(event):
+    global CONST_POOL_INDEX, CONST_POOL_PAGES
+    
+    if event.app.layout != CONST_POOL_PAGES[CONST_POOL_INDEX]:
+        return
+    
+    if CONST_POOL_INDEX < len(CONST_POOL_PAGES)-1:
+        CONST_POOL_INDEX += 1
+        event.app.layout = CONST_POOL_PAGES[CONST_POOL_INDEX]
+
 @kb.add('up')
 def step_previous_(event):
     global EXECUTION_INDEX
     
+    if event.app.layout != LAYOUT_STACK[EXECUTION_INDEX]:
+        return
+    
     if EXECUTION_INDEX >= 1:
         EXECUTION_INDEX -= 1
+        event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
+
+@kb.add('down')
+def step_next_(event):
+    global EXECUTION_INDEX
+    
+    if event.app.layout != LAYOUT_STACK[EXECUTION_INDEX]:
+        return
+    
+    if EXECUTION_INDEX < len(LAYOUT_STACK)-1:
+        EXECUTION_INDEX += 1
         event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
 
     
@@ -100,16 +145,37 @@ with open(java_file, 'r') as f:
     
     if 'package' in code[0]:
         package = code[0].split()[-1].strip(';')
-        method = f'{package}/{class_name}/{method_name}'
-    else:
-        method = f'{class_name}/{method_name}'
-    
-    
+        class_name = f'{package}/{class_name}'
+    method = f'{class_name}/{method_name}'
+
 
 # load the class file
 jvm = Machine()
 load_stdlib_classes(jvm)
 jvm.load_class_file(class_file)
+
+
+# create layout for constant pool view
+frames = [
+    [Label(text=f'{i+1}:', width=5) for i,_ in enumerate(jvm.class_files[class_name].const_pool)],
+    [Label(text=f'{c.tag.name if c.tag else ""}', width=15) for c in jvm.class_files[class_name].const_pool],
+    [Label(text=', '.join([f'{k}:{v}' for k,v in c.__dict__.items() if k != 'tag'])) for c in jvm.class_files[class_name].const_pool],
+]
+frames = [list(f) for f in zip(*frames)]
+
+CONST_POOL_PAGES = []
+
+for i in range(0, len(frames), 14):
+    frames_chunk = frames[i:i+14]
+    
+    page = Layout(HSplit([
+        VSplit([HSplit([Frame(VSplit(frame)) for frame in frames_chunk])]),
+        Window(),
+        Label('LEFT/RIGHT: change page. v: toggle view. q: quit.')
+    ]))
+    
+    CONST_POOL_PAGES += [page]
+
 
 # start the JVM and record the Layout at each step
 print(f'Recording the execution of {method}...')
@@ -121,15 +187,11 @@ if not LAYOUT_STACK:
 
 # overwrite the first textbox of each Layout object to show the number of steps
 for i,l in enumerate(LAYOUT_STACK):
-    l.container.children[0].children[0].children[2].children[1].get_container().children[0].content.buffer.text = f'Step {i+1}/{len(LAYOUT_STACK)}'
+    l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].content.buffer.text = f'Step {i+1}/{len(LAYOUT_STACK)}'
 
 
 # create and start the application (will replay the recorded execution)
-layout = Layout(HSplit([
-    Label(text='UP/DOWN: step to the previous/next instruction'),
-    Label(text='gg/GG: go to the start/end of the execution'),
-    Label(text='q or CTRL-c: exit'),
-    Label(text='\nPress ENTER to start')
-]))
+layout = LAYOUT_STACK[EXECUTION_INDEX]
+
 app = Application(key_bindings=kb, layout=layout, full_screen=True)
 app.run()

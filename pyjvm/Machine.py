@@ -475,36 +475,40 @@ class Machine:
         while True:
             inst = Inst(code[frame.ip])
 
-            container = VSplit([
+            container = HSplit([
+                VSplit([
                     HSplit([
                         PTFrame(
                             HSplit([
-                                TextArea(text=f'NUMSTEPS'),
-                                Label(text=f'Class: {frame.current_class.name()}'),
-                                Label(text=f'Method: {frame.current_class.name()}.{frame.current_method.name}:{frame.current_method.desc}'),
+                                TextArea(f'NUMSTEPS'),
+                                Label(f'Class: {frame.current_class.name()}'),
+                                Label(f'Method: {frame.current_class.name()}.{frame.current_method.name}:{frame.current_method.desc}'),
                             ], height=3),
                             title='Context',
                         ),
                         PTFrame(
                             HSplit([
-                                Label(text=insn, style='bold fg:red' if ip==frame.ip else '') for ip, insn in parsed_code.items()
+                                Label(insn, style='bold fg:red' if ip==frame.ip else '') for ip, insn in parsed_code.items()
                             ], height=len(parsed_code) or 1),
                             title='ByteCode',
                         ),
                     ]),
                     HSplit([
                         PTFrame(
-                            HSplit([Label(text=f'{i}: {v}') for i, v in enumerate(frame.locals)
+                            HSplit([Label(f'{i}: {v}') for i, v in enumerate(frame.locals)
                                    ], height=len(frame.locals) or 1),
                             title='Local Variables Stack',
                         ),
                         PTFrame(
-                            HSplit([Label(text=f'{i}: {v}') for i, v in enumerate(frame.stack)
+                            HSplit([Label(f'{i}: {v}') for i, v in enumerate(frame.stack)
                                    ], height=len(frame.stack) or 1),
                             title='Operands Stack',
                         )
                     ])
-                ])
+                ]),
+                Window(),
+                Label('UP/DOWN: step backward/forward. gg/GG: jump to the start/end. v: toggle view. q: quit.')
+            ])
 
             global LAYOUT_STACK
             LAYOUT_STACK += [Layout(container)]
