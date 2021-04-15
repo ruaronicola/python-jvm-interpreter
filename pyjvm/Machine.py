@@ -50,6 +50,9 @@ class Inst(Enum):
     FLOAD_1       = 0x23
     FLOAD_2       = 0x24
     FLOAD_3       = 0x25
+    DLOAD_0       = 0x26
+    DLOAD_1       = 0x27
+    DLOAD_2       = 0x28
     DLOAD_3       = 0x29
     ALOAD_0       = 0x2A
     ALOAD_1       = 0x2B
@@ -73,6 +76,9 @@ class Inst(Enum):
     FSTORE_1      = 0x44
     FSTORE_2      = 0x45
     FSTORE_3      = 0x46
+    DSTORE_0      = 0x47
+    DSTORE_1      = 0x48
+    DSTORE_2      = 0x49
     DSTORE_3      = 0x4A
     ASTORE_0      = 0x4B
     ASTORE_1      = 0x4C
@@ -296,6 +302,7 @@ def iload(frame):
 
 @opcode(Inst.ILOAD_0)
 @opcode(Inst.LLOAD_0)
+@opcode(Inst.DLOAD_0)
 @opcode(Inst.FLOAD_0)
 @opcode(Inst.ALOAD_0)
 def iload_0(frame):
@@ -303,6 +310,7 @@ def iload_0(frame):
 
 @opcode(Inst.ILOAD_1)
 @opcode(Inst.LLOAD_1)
+@opcode(Inst.DLOAD_1)
 @opcode(Inst.FLOAD_1)
 @opcode(Inst.ALOAD_1)
 def iload_1(frame):
@@ -310,14 +318,11 @@ def iload_1(frame):
 
 @opcode(Inst.ILOAD_2)
 @opcode(Inst.LLOAD_2)
+@opcode(Inst.DLOAD_2)
 @opcode(Inst.FLOAD_2)
 @opcode(Inst.ALOAD_2)
 def iload_2(frame):
     frame.push(frame.get_local(2))
-
-@opcode(Inst.ALOAD_3)
-def aload_3(frame):
-    frame.push(frame.get_local(3))
 
 @opcode(Inst.IALOAD)
 def iaload(frame):
@@ -327,37 +332,53 @@ def iaload(frame):
 
 @opcode(Inst.ILOAD_3)
 @opcode(Inst.LLOAD_3)
-@opcode(Inst.FLOAD_3)
 @opcode(Inst.DLOAD_3)
+@opcode(Inst.FLOAD_3)
+@opcode(Inst.ALOAD_3)
 def iload_3(frame):
     frame.push(frame.get_local(3))
 
 @opcode(Inst.ISTORE)
 @opcode(Inst.LSTORE)
-@opcode(Inst.FSTORE)
 @opcode(Inst.DSTORE)
+@opcode(Inst.FSTORE)
 def istore(frame):
     index = read_byte(frame)
     val = frame.pop()
     frame.set_local(index, val)
 
+@opcode(Inst.ISTORE_0)
 @opcode(Inst.LSTORE_0)
+@opcode(Inst.DSTORE_0)
+@opcode(Inst.FSTORE_0)
+@opcode(Inst.ASTORE_0)
 def lstore_0(frame):
     val = frame.pop()
     frame.set_local(0, val)
 
+@opcode(Inst.ISTORE_1)
 @opcode(Inst.LSTORE_1)
+@opcode(Inst.DSTORE_1)
+@opcode(Inst.FSTORE_1)
+@opcode(Inst.ASTORE_1)
 def lstore_1(frame):
     val = frame.pop()
     frame.set_local(1, val)
 
+@opcode(Inst.ISTORE_2)
 @opcode(Inst.LSTORE_2)
+@opcode(Inst.DSTORE_2)
+@opcode(Inst.FSTORE_2)
+@opcode(Inst.ASTORE_2)
 def lstore_2(frame):
     val = frame.pop()
-    frame.set_local(1, val)
+    frame.set_local(2, val)
 
+@opcode(Inst.ISTORE_3)
 @opcode(Inst.LSTORE_3)
 @opcode(Inst.DSTORE_3)
+@opcode(Inst.FSTORE_3)
+@opcode(Inst.ASTORE_3)
 def lstore_3(frame):
     val = frame.pop()
     frame.set_local(3, val)
@@ -521,42 +542,6 @@ class Machine:
 
             if inst in OPCODES:
                 OPCODES[inst](frame)
-            elif inst == Inst.ISTORE_0:
-                val = frame.stack.pop()
-                frame.set_local(0, val)
-            elif inst == Inst.ISTORE_1:
-                val = frame.stack.pop()
-                frame.set_local(1, val)
-            elif inst == Inst.ISTORE_2:
-                val = frame.stack.pop()
-                frame.set_local(2, val)
-            elif inst == Inst.ISTORE_3:
-                val = frame.stack.pop()
-                frame.set_local(3, val)
-            elif inst == Inst.FSTORE_0:
-                val = frame.stack.pop()
-                frame.set_local(0, val)
-            elif inst == Inst.FSTORE_1:
-                val = frame.stack.pop()
-                frame.set_local(1, val)
-            elif inst == Inst.FSTORE_2:
-                val = frame.stack.pop()
-                frame.set_local(2, val)
-            elif inst == Inst.FSTORE_3:
-                val = frame.stack.pop()
-                frame.set_local(3, val)
-            elif inst == Inst.ASTORE_0:
-                obj = frame.stack.pop()
-                frame.set_local(0, obj)
-            elif inst == Inst.ASTORE_1:
-                obj = frame.stack.pop()
-                frame.set_local(1, obj)
-            elif inst == Inst.ASTORE_2:
-                obj = frame.stack.pop()
-                frame.set_local(2, obj)
-            elif inst == Inst.ASTORE_3:
-                obj = frame.stack.pop()
-                frame.set_local(3, obj)
             elif inst == Inst.IASTORE or inst == Inst.AASTORE:
                 val = frame.stack.pop()
                 index = frame.stack.pop()
@@ -681,7 +666,7 @@ class Machine:
                         
                         # first parse and initialize all existing static fields
                         for c in cl.const_pool:
-                            if c.tag.name == 'FIELDREF':
+                            if c.tag and c.tag.name == 'FIELDREF':
                                 name = cl.const_pool[c.name_and_type_index-1].name
                                 desc = cl.const_pool[c.name_and_type_index-1].desc
                                 cl.set_field(name, DEFAULTS.get(desc, None))

@@ -158,7 +158,7 @@ jvm.load_class_file(class_file)
 # create layout for constant pool view
 frames = [
     [Label(text=f'{i+1}:', width=5) for i,_ in enumerate(jvm.class_files[class_name].const_pool)],
-    [Label(text=f'{c.tag.name if c.tag else ""}', width=15) for c in jvm.class_files[class_name].const_pool],
+    [Label(text=f'{c.tag.name if c.tag else "?"}', width=15) for c in jvm.class_files[class_name].const_pool],
     [Label(text=', '.join([f'{k}:{v}' for k,v in c.__dict__.items() if k != 'tag'])) for c in jvm.class_files[class_name].const_pool],
 ]
 frames = [list(f) for f in zip(*frames)]
