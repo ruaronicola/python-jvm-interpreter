@@ -10,8 +10,10 @@ import struct
 import io
 from enum import Enum
 
+import numpy as np
 
-DEFAULTS = {'I': 0, 'B': 0, 'S': 0, 'J': 0, 'F': 0, 'D': 0, 'Z': False, 'C': '0'}
+
+DEFAULTS = {'I': 0, 'B': 0, 'S': 0, 'J': np.longlong(0), 'F': 0, 'D': np.double(0), 'Z': False, 'C': '0'}
 LAYOUT_STACK = []
 
 
@@ -257,11 +259,11 @@ def iconst_5(frame):
 
 @opcode(Inst.DCONST_0)
 def dconst_0(frame):
-    frame.push(0.0)
+    frame.push(np.double(0.0))
 
 @opcode(Inst.DCONST_1)
 def dconst_1(frame):
-    frame.push(1.0)
+    frame.push(np.double(1.0))
 
 @opcode(Inst.BIPUSH)
 def bipush(frame):
@@ -288,41 +290,67 @@ def ldc(frame):
 @opcode(Inst.LDC2_W)
 def ldc2_w(frame):
     index = read_unsigned_short(frame)
-    const = frame.current_class.const_pool[index - 1].double
+    const = np.double(frame.current_class.const_pool[index - 1].double)
 
     frame.push(const)
 
 @opcode(Inst.ILOAD)
-@opcode(Inst.LLOAD)
 @opcode(Inst.FLOAD)
-@opcode(Inst.DLOAD)
 def iload(frame):
     index = read_byte(frame)
     frame.push(frame.get_local(index))
+    
+@opcode(Inst.LLOAD)
+def iload(frame):
+    index = read_byte(frame)
+    frame.push(np.longlong(frame.get_local(index)))
+    
+@opcode(Inst.DLOAD)
+def iload(frame):
+    index = read_byte(frame)
+    frame.push(np.double(frame.get_local(index)))
 
 @opcode(Inst.ILOAD_0)
-@opcode(Inst.LLOAD_0)
-@opcode(Inst.DLOAD_0)
 @opcode(Inst.FLOAD_0)
 @opcode(Inst.ALOAD_0)
 def iload_0(frame):
     frame.push(frame.get_local(0))
+    
+@opcode(Inst.LLOAD_0)
+def lload_0(frame):
+    frame.push(np.longlong(frame.get_local(0)))
+    
+@opcode(Inst.DLOAD_0)
+def dload_0(frame):
+    frame.push(np.double(frame.get_local(0)))
 
 @opcode(Inst.ILOAD_1)
-@opcode(Inst.LLOAD_1)
-@opcode(Inst.DLOAD_1)
 @opcode(Inst.FLOAD_1)
 @opcode(Inst.ALOAD_1)
 def iload_1(frame):
     frame.push(frame.get_local(1))
+    
+@opcode(Inst.LLOAD_1)
+def lload_1(frame):
+    frame.push(np.longlong(frame.get_local(1)))
+    
+@opcode(Inst.DLOAD_1)
+def dload_1(frame):
+    frame.push(np.double(frame.get_local(1)))
 
 @opcode(Inst.ILOAD_2)
-@opcode(Inst.LLOAD_2)
-@opcode(Inst.DLOAD_2)
 @opcode(Inst.FLOAD_2)
 @opcode(Inst.ALOAD_2)
 def iload_2(frame):
     frame.push(frame.get_local(2))
+    
+@opcode(Inst.LLOAD_2)
+def lload_2(frame):
+    frame.push(np.longlong(frame.get_local(2)))
+    
+@opcode(Inst.DLOAD_2)
+def dload_2(frame):
+    frame.push(np.double(frame.get_local(2)))
 
 @opcode(Inst.IALOAD)
 def iaload(frame):
@@ -331,12 +359,18 @@ def iaload(frame):
     frame.push(array[index])
 
 @opcode(Inst.ILOAD_3)
-@opcode(Inst.LLOAD_3)
-@opcode(Inst.DLOAD_3)
 @opcode(Inst.FLOAD_3)
 @opcode(Inst.ALOAD_3)
 def iload_3(frame):
     frame.push(frame.get_local(3))
+    
+@opcode(Inst.LLOAD_3)
+def lload_3(frame):
+    frame.push(np.longlong(frame.get_local(3)))
+    
+@opcode(Inst.DLOAD_3)
+def dload_3(frame):
+    frame.push(np.double(frame.get_local(3)))
 
 @opcode(Inst.ISTORE)
 @opcode(Inst.LSTORE)
@@ -495,6 +529,15 @@ class Machine:
         
         while True:
             inst = Inst(code[frame.ip])
+            
+            operand_stack = []
+            i = 0
+            for v in frame.stack:
+                operand_stack += [Label(f'{i}: {v}')]
+                i += 1
+                if isinstance(v, (np.longlong, np.double)):
+                    operand_stack += [Label(f'{i}:')]
+                    i += 1
 
             container = HSplit([
                 VSplit([
@@ -521,8 +564,7 @@ class Machine:
                             title='Local Variables Stack',
                         ),
                         PTFrame(
-                            HSplit([Label(f'{i}: {v}') for i, v in enumerate(frame.stack)
-                                   ], height=len(frame.stack) or 1),
+                            HSplit(operand_stack, height=len(operand_stack) or 1),
                             title='Operands Stack',
                         )
                     ])
