@@ -668,7 +668,7 @@ class Machine:
                     code = m.find_attr('Code').info
                     code = CodeAttr().from_reader(io.BytesIO(code))
 
-                    frame = Frame(code, cf, self)
+                    frame = Frame(code, m, cf, self)
                     for i, arg in enumerate(args):
                         frame.set_local(i, arg)
                     return self.execute_code(frame)
