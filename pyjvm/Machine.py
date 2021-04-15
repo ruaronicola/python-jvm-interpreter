@@ -98,6 +98,31 @@ class Inst(Enum):
     NEWARRAY      = 0xBC
     ANEWARRAY     = 0xBD
     ARRAYLENGTH   = 0xBE
+    
+
+def parse_opcode_at(code, ip):
+    op = Inst(code[ip])
+    if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.DLOAD, Inst.ISTORE, Inst.LSTORE, Inst.DSTORE, Inst.NEWARRAY]: # read_byte
+        return f'{ip}: {op.name} {code[ip+1]}', ip+2
+    elif op in [Inst.IINC]:
+        return f'{ip}: {op.name} {code[ip+1]} {struct.unpack("!b", code[ip+2:ip+3])[0]}', ip+3
+    elif op in [Inst.SIPUSH, Inst.IFNE, Inst.IFLT, Inst.IFGE, Inst.IFLE, Inst.IF_ICMPLT, Inst.IF_ICMPGE, Inst.IF_ICMPGT, Inst.IF_ICMPLE, Inst.GOTO]: # read_signed_short
+        return f'{ip}: {op.name} {struct.unpack("!h", code[ip+1:ip+3])[0]}', ip+3
+    elif op in [Inst.LDC2_W, Inst.ANEWARRAY, Inst.GETSTATIC, Inst.PUTSTATIC, Inst.GETFIELD, Inst.PUTFIELD, Inst.INVOKEVIRTUAL, Inst.INVOKESPECIAL, Inst.INVOKESTATIC, Inst.NEW]: # read_unsigned_short
+        return f'{ip}: {op.name} {struct.unpack("!H", code[ip+1:ip+3])[0]}', ip+3
+    else:
+        return f'{ip}: {op.name}', ip+1
+
+def parse_code(code):
+    insns = dict()
+    ip = 0
+    while ip < len(code):
+        insn, new_ip = parse_opcode_at(code, ip)
+        insns[ip] = insn
+        
+        ip = new_ip
+        
+    return insns
 
 def argumentCount(desc):
     arg = desc.split(')', 2)[0][1:]
