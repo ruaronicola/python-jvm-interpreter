@@ -25,6 +25,9 @@ class Inst(Enum):
     ICONST_5      = 0x08
     LCONST_0      = 0x09
     LCONST_1      = 0x0A
+    FCONST_0      = 0x0B
+    FCONST_1      = 0x0C
+    FCONST_2      = 0x0D
     DCONST_0      = 0x0E
     DCONST_1      = 0x0F
     BIPUSH        = 0x10
@@ -33,6 +36,7 @@ class Inst(Enum):
     LDC2_W        = 0x14
     ILOAD         = 0x15
     LLOAD         = 0x16
+    FLOAD         = 0x16
     DLOAD         = 0x18
     ILOAD_0       = 0x1A
     ILOAD_1       = 0x1B
@@ -42,6 +46,10 @@ class Inst(Enum):
     LLOAD_1       = 0x1F
     LLOAD_2       = 0x20
     LLOAD_3       = 0x21
+    FLOAD_0       = 0x22
+    FLOAD_1       = 0x23
+    FLOAD_2       = 0x24
+    FLOAD_3       = 0x25
     DLOAD_3       = 0x29
     ALOAD_0       = 0x2A
     ALOAD_1       = 0x2B
@@ -51,6 +59,7 @@ class Inst(Enum):
     AALOAD        = 0x32
     ISTORE        = 0x36
     LSTORE        = 0x37
+    FSTORE        = 0x38
     DSTORE        = 0x39
     ISTORE_0      = 0x3B
     ISTORE_1      = 0x3C
@@ -60,6 +69,10 @@ class Inst(Enum):
     LSTORE_1      = 0x40
     LSTORE_2      = 0x41
     LSTORE_3      = 0x42
+    FSTORE_0      = 0x43
+    FSTORE_1      = 0x44
+    FSTORE_2      = 0x45
+    FSTORE_3      = 0x46
     DSTORE_3      = 0x4A
     ASTORE_0      = 0x4B
     ASTORE_1      = 0x4C
@@ -71,11 +84,19 @@ class Inst(Enum):
     DUP           = 0x59
     IADD          = 0x60
     LADD          = 0x61
+    FADD          = 0x62
     DADD          = 0x63
     ISUB          = 0x64
+    LSUB          = 0x65
+    FSUB          = 0x66
     DSUB          = 0x67
     IMUL          = 0x68
+    LMUL          = 0x68
+    FMUL          = 0x6A
     DMUL          = 0x6B
+    IDIV          = 0x6C
+    LDIV          = 0x6D
+    FDIV          = 0x6E
     DDIV          = 0x6F
     IREM          = 0x70
     IINC          = 0x84
@@ -113,7 +134,7 @@ def parse_opcode_at(frame, ip):
     code = frame.code
     op = Inst(code[ip])
     
-    if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.DLOAD, Inst.ISTORE, Inst.LSTORE, Inst.DSTORE, Inst.NEWARRAY]: # read_byte
+    if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.FLOAD, Inst.DLOAD, Inst.ISTORE, Inst.LSTORE, Inst.FSTORE, Inst.DSTORE, Inst.NEWARRAY]: # read_byte
         return f'{ip}: {op.name} {code[ip+1]}', ip+2
     
     elif op in [Inst.IINC]:
@@ -201,15 +222,18 @@ def iconst_m1(frame):
 
 @opcode(Inst.ICONST_0)
 @opcode(Inst.LCONST_0)
+@opcode(Inst.FCONST_0)
 def iconst_0(frame):
     frame.push(0)
 
 @opcode(Inst.ICONST_1)
 @opcode(Inst.LCONST_1)
+@opcode(Inst.FCONST_1)
 def iconst_1(frame):
     frame.push(1)
 
 @opcode(Inst.ICONST_2)
+@opcode(Inst.FCONST_2)
 def iconst_2(frame):
     frame.push(2)
 
@@ -264,6 +288,7 @@ def ldc2_w(frame):
 
 @opcode(Inst.ILOAD)
 @opcode(Inst.LLOAD)
+@opcode(Inst.FLOAD)
 @opcode(Inst.DLOAD)
 def iload(frame):
     index = read_byte(frame)
@@ -271,18 +296,21 @@ def iload(frame):
 
 @opcode(Inst.ILOAD_0)
 @opcode(Inst.LLOAD_0)
+@opcode(Inst.FLOAD_0)
 @opcode(Inst.ALOAD_0)
 def iload_0(frame):
     frame.push(frame.get_local(0))
 
 @opcode(Inst.ILOAD_1)
 @opcode(Inst.LLOAD_1)
+@opcode(Inst.FLOAD_1)
 @opcode(Inst.ALOAD_1)
 def iload_1(frame):
     frame.push(frame.get_local(1))
 
 @opcode(Inst.ILOAD_2)
 @opcode(Inst.LLOAD_2)
+@opcode(Inst.FLOAD_2)
 @opcode(Inst.ALOAD_2)
 def iload_2(frame):
     frame.push(frame.get_local(2))
@@ -299,12 +327,14 @@ def iaload(frame):
 
 @opcode(Inst.ILOAD_3)
 @opcode(Inst.LLOAD_3)
+@opcode(Inst.FLOAD_3)
 @opcode(Inst.DLOAD_3)
 def iload_3(frame):
     frame.push(frame.get_local(3))
 
 @opcode(Inst.ISTORE)
 @opcode(Inst.LSTORE)
+@opcode(Inst.FSTORE)
 @opcode(Inst.DSTORE)
 def istore(frame):
     index = read_byte(frame)
@@ -344,11 +374,14 @@ def dup(frame):
 
 @opcode(Inst.IADD)
 @opcode(Inst.LADD)
+@opcode(Inst.FADD)
 @opcode(Inst.DADD)
 def iadd(frame):
     frame.push(frame.pop() + frame.pop())
 
 @opcode(Inst.ISUB)
+@opcode(Inst.LSUB)
+@opcode(Inst.FSUB)
 @opcode(Inst.DSUB)
 def isub(frame):
     val2 = frame.pop()
@@ -363,12 +396,17 @@ def isub(frame):
     frame.push(val1 - val2)
 
 @opcode(Inst.IMUL)
+@opcode(Inst.LMUL)
+@opcode(Inst.FMUL)
 @opcode(Inst.DMUL)
 def imul(frame):
     val2 = frame.pop()
     val1 = frame.pop()
     frame.push(val2 * val1)
 
+@opcode(Inst.IDIV)
+@opcode(Inst.LDIV)
+@opcode(Inst.FDIV)
 @opcode(Inst.DDIV)
 def ddiv(frame):
     val2 = frame.pop()
@@ -489,6 +527,18 @@ class Machine:
                 val = frame.stack.pop()
                 frame.set_local(2, val)
             elif inst == Inst.ISTORE_3:
+                val = frame.stack.pop()
+                frame.set_local(3, val)
+            elif inst == Inst.FSTORE_0:
+                val = frame.stack.pop()
+                frame.set_local(0, val)
+            elif inst == Inst.FSTORE_1:
+                val = frame.stack.pop()
+                frame.set_local(1, val)
+            elif inst == Inst.FSTORE_2:
+                val = frame.stack.pop()
+                frame.set_local(2, val)
+            elif inst == Inst.FSTORE_3:
                 val = frame.stack.pop()
                 frame.set_local(3, val)
             elif inst == Inst.ASTORE_0:
