@@ -40,6 +40,7 @@ class Inst(Enum):
     LLOAD         = 0x16
     FLOAD         = 0x16
     DLOAD         = 0x18
+    ALOAD         = 0x19
     ILOAD_0       = 0x1A
     ILOAD_1       = 0x1B
     ILOAD_2       = 0x1C
@@ -66,6 +67,7 @@ class Inst(Enum):
     LSTORE        = 0x37
     FSTORE        = 0x38
     DSTORE        = 0x39
+    ASTORE        = 0x3A
     ISTORE_0      = 0x3B
     ISTORE_1      = 0x3C
     ISTORE_2      = 0x3D
@@ -89,6 +91,7 @@ class Inst(Enum):
     IASTORE       = 0x4F
     AASTORE       = 0x53
     POP           = 0x57
+    POP2          = 0x58
     DUP           = 0x59
     IADD          = 0x60
     LADD          = 0x61
@@ -142,7 +145,7 @@ def parse_opcode_at(frame, ip):
     code = frame.code
     op = Inst(code[ip])
     
-    if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.FLOAD, Inst.DLOAD, Inst.ISTORE, Inst.LSTORE, Inst.FSTORE, Inst.DSTORE, Inst.NEWARRAY]: # read_byte
+    if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.FLOAD, Inst.DLOAD, Inst.ALOAD, Inst.ISTORE, Inst.LSTORE, Inst.FSTORE, Inst.DSTORE, Inst.ASTORE, Inst.NEWARRAY]: # read_byte
         return f'{ip}: {op.name} {code[ip+1]}', ip+2
     
     elif op in [Inst.IINC]:
@@ -296,6 +299,7 @@ def ldc2_w(frame):
 
 @opcode(Inst.ILOAD)
 @opcode(Inst.FLOAD)
+@opcode(Inst.ALOAD)
 def iload(frame):
     index = read_byte(frame)
     frame.push(frame.get_local(index))
@@ -376,6 +380,7 @@ def dload_3(frame):
 @opcode(Inst.LSTORE)
 @opcode(Inst.DSTORE)
 @opcode(Inst.FSTORE)
+@opcode(Inst.ASTORE)
 def istore(frame):
     index = read_byte(frame)
     val = frame.pop()
@@ -419,6 +424,11 @@ def lstore_3(frame):
 
 @opcode(Inst.POP)
 def pop(frame):
+    frame.pop()
+
+@opcode(Inst.POP2)
+def pop(frame):
+    frame.pop()
     frame.pop()
 
 @opcode(Inst.DUP)
@@ -532,11 +542,11 @@ class Machine:
             
             operand_stack = []
             i = 0
-            for v in frame.stack:
-                operand_stack += [Label(f'{i}: {v}')]
+            for v in frame.stack[::-1]:
+                operand_stack += [Label(f'TOS: {v}' if i == 0 else f'     {v}')]
                 i += 1
                 if isinstance(v, (np.longlong, np.double)):
-                    operand_stack += [Label(f'{i}:')]
+                    operand_stack += [Label('')]
                     i += 1
 
             container = HSplit([
