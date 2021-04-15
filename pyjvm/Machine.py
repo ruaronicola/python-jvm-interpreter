@@ -108,24 +108,42 @@ class Inst(Enum):
     ARRAYLENGTH   = 0xBE
     
 
-def parse_opcode_at(code, ip):
+def parse_opcode_at(frame, ip):
+    code = frame.code
     op = Inst(code[ip])
+    
     if op in [Inst.BIPUSH, Inst.LDC, Inst.ILOAD, Inst.LLOAD, Inst.DLOAD, Inst.ISTORE, Inst.LSTORE, Inst.DSTORE, Inst.NEWARRAY]: # read_byte
         return f'{ip}: {op.name} {code[ip+1]}', ip+2
+    
     elif op in [Inst.IINC]:
         return f'{ip}: {op.name} {code[ip+1]} {struct.unpack("!b", code[ip+2:ip+3])[0]}', ip+3
+    
     elif op in [Inst.SIPUSH, Inst.IFNE, Inst.IFLT, Inst.IFGE, Inst.IFLE, Inst.IF_ICMPLT, Inst.IF_ICMPGE, Inst.IF_ICMPGT, Inst.IF_ICMPLE, Inst.GOTO]: # read_signed_short
         return f'{ip}: {op.name} {struct.unpack("!h", code[ip+1:ip+3])[0]}', ip+3
-    elif op in [Inst.LDC2_W, Inst.ANEWARRAY, Inst.GETSTATIC, Inst.PUTSTATIC, Inst.GETFIELD, Inst.PUTFIELD, Inst.INVOKEVIRTUAL, Inst.INVOKESPECIAL, Inst.INVOKESTATIC, Inst.NEW]: # read_unsigned_short
+    
+    elif op in [Inst.INVOKEVIRTUAL, Inst.INVOKESPECIAL, Inst.INVOKESTATIC]:
+        index = struct.unpack("!H", code[ip+1:ip+3])[0]
+        methodRef = frame.current_class.const_pool[index - 1]
+        name = frame.current_class.const_pool[methodRef.class_index - 1].name
+        natIndex = methodRef.name_and_type_index
+        nat = frame.current_class.const_pool[natIndex - 1]
+        
+        return f'{ip}: {op.name} {index}  // {name}.{nat.name}{nat.desc}', ip+3
+    
+    elif op in [Inst.LDC2_W, Inst.ANEWARRAY, Inst.GETSTATIC, Inst.PUTSTATIC, Inst.GETFIELD, Inst.PUTFIELD, Inst.NEW]: # read_unsigned_short
         return f'{ip}: {op.name} {struct.unpack("!H", code[ip+1:ip+3])[0]}', ip+3
+    
     else:
         return f'{ip}: {op.name}', ip+1
 
-def parse_code(code):
+def parse_code(frame):
+    code = frame.code
+    
     insns = dict()
     ip = 0
+    
     while ip < len(code):
-        insn, new_ip = parse_opcode_at(code, ip)
+        insn, new_ip = parse_opcode_at(frame, ip)
         insns[ip] = insn
         
         ip = new_ip
@@ -413,7 +431,7 @@ class Machine:
 
     def execute_code(self, frame):
         code = frame.code
-        parsed_code = parse_code(code)
+        parsed_code = parse_code(frame)
         
         while True:
             inst = Inst(code[frame.ip])
