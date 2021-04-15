@@ -2,6 +2,7 @@
 
 import ast
 import sys
+import subprocess
 
 from asyncio import get_event_loop
 
@@ -63,12 +64,43 @@ def step_previous_(event):
 
     
 # parse arguments
-if len(sys.argv) != 4:
-    print(f'Usage: {sys.argv[0]} <.class file> <function> <python repr(arguments)>')
+# if len(sys.argv) != 4:
+#     print(f'Usage: {sys.argv[0]} <.class file> <function> <python repr(arguments)>')
+#     exit(1)
+# class_file = sys.argv[1]
+# function = sys.argv[2]
+# arguments = ast.literal_eval(sys.argv[3])
+
+if len(sys.argv) < 4:
+    print(f'Usage: {sys.argv[0]} <.java file> <class> <method> [<python repr(arguments)>]')
     exit(1)
-class_file = sys.argv[1]
-function = sys.argv[2]
-arguments = ast.literal_eval(sys.argv[3])
+java_file = sys.argv[1]
+class_name = sys.argv[2]
+method_name = sys.argv[3]
+if len(sys.argv) >= 5:
+    arguments = ast.literal_eval(sys.argv[4])
+else:
+    arguments = None
+
+# compile
+try:
+    subprocess.check_call(['javac', '--release', '8', java_file])
+    java_basename = java_file.split('/')[-1]
+    class_file = java_file.replace(java_basename, f'{class_name}.class')
+except subprocess.CalledProcessError:
+    print(f'Failed to compile {java_file}')
+    exit(1)
+    
+with open(java_file, 'r') as f:
+    code = f.readlines()
+    
+    if 'package' in code[0]:
+        package = code[0].split()[-1].strip(';')
+        method = f'{package}/{class_name}/{method_name}'
+    else:
+        method = f'{class_name}/{method_name}'
+    
+    
 
 # load the class file
 jvm = Machine()
@@ -76,8 +108,12 @@ load_stdlib_classes(jvm)
 jvm.load_class_file(class_file)
 
 # start the JVM and record the Layout at each step
-print('Recording the execution...')
-stdout = jvm.call_function(function, arguments)
+print(f'Recording the execution of {method}...')
+stdout = jvm.call_function(method, arguments)
+
+if not LAYOUT_STACK:
+    print('Something went wrong during the execution')
+    exit(1)
 
 # overwrite the first textbox of each Layout object to show the number of steps
 for i,l in enumerate(LAYOUT_STACK):

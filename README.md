@@ -2,10 +2,10 @@
 Simple extension of `python-jvm-interpreter` that allows to single step through a Java function and inspect the JVM state (local variable stack and operand stack).
 
 Usage:
-`./run.py </path/to/.class> <package/to/method> <python repr(arguments)>`
+`./run.py </path/to/.java file> <class> <method> [<python repr(arguments)>]`
 
 Example:
-`./run.py example/ArrayTest.class jvmtest/ArrayTest/sum '[1, 2, 3, 4]'`
+`./run.py example/Array.java ArrayTest sum '[1, 2, 3, 4]'`
 
 # JVM implementation in Python
 
