@@ -2,7 +2,7 @@ class Frame:
     def __init__(self, code, current_method, current_class, machine):
         self.code = code.code
         self.stack  = []
-        self.locals = [current_class] + ['' for i in range(code.max_locals)]
+        self.locals = [current_class] + ['' for i in range(code.max_locals-1)]
         self.current_method = current_method
         self.current_class = current_class
         self.ip = 0
