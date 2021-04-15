@@ -9,28 +9,44 @@ from pyjvm.Machine import Machine, LAYOUT_STACK
 from pyjvm.jstdlib.StdlibLoader import load_stdlib_classes
 
 from prompt_toolkit import Application
+from prompt_toolkit.layout.containers import HSplit
 from prompt_toolkit.widgets import Label
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import get_app
+from prompt_toolkit import prompt
 
 
 # create the key bindings for prompt_toolkit
 EXECUTION_INDEX = 0
 kb = KeyBindings()
 
-@kb.add('c-c')
+@kb.add('q')
 def exit_(event):
     event.app.exit()
     
+@kb.add('g', 'g')
+def goto_start_(event):
+    global EXECUTION_INDEX
+    
+    EXECUTION_INDEX = 0
+    event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
+    
+@kb.add('G', 'G')
+def goto_end_(event):
+    global EXECUTION_INDEX
+    
+    EXECUTION_INDEX = len(LAYOUT_STACK)-1
+    event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
+    
 @kb.add('c-m')
-def step_(event):
+def start_(event):
     global EXECUTION_INDEX
     
     event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
     
 @kb.add('down')
-def step_(event):
+def step_next_(event):
     global EXECUTION_INDEX
     
     if EXECUTION_INDEX < len(LAYOUT_STACK)-1:
@@ -38,7 +54,7 @@ def step_(event):
         event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
         
 @kb.add('up')
-def step_(event):
+def step_previous_(event):
     global EXECUTION_INDEX
     
     if EXECUTION_INDEX >= 1:
@@ -69,6 +85,11 @@ for i,l in enumerate(LAYOUT_STACK):
 
 
 # create and start the application (will replay the recorded execution)
-layout = Layout(Label(text='Press ENTER to start. Press UP/DOWN to step to the previous/next instruction. Press CTRL-c to exit.'))
+layout = Layout(HSplit([
+    Label(text='UP/DOWN: step to the previous/next instruction'),
+    Label(text='gg/GG: go to the start/end of the execution'),
+    Label(text='q: exit'),
+    Label(text='\nPress ENTER to start')
+]))
 app = Application(key_bindings=kb, layout=layout, full_screen=True)
 app.run()
