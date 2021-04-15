@@ -11,6 +11,7 @@ import io
 from enum import Enum
 
 
+DEFAULTS = {'I': 0, 'B': 0, 'S': 0, 'J': 0, 'F': 0, 'D': 0, 'Z': False, 'C': '0'}
 LAYOUT_STACK = []
 
 
@@ -620,9 +621,19 @@ class Machine:
 
                 if name in self.class_files:
                     cl = self.class_files[name]
+                    
                     if not cl.static_initialized:
                         cl.static_initialized = True
-                        cl.handleMethod('<clinit>', '()V', frame)
+                        
+                        # first parse and initialize all existing static fields
+                        for c in cl.const_pool:
+                            if c.tag.name == 'FIELDREF':
+                                name = cl.const_pool[c.name_and_type_index-1].name
+                                desc = cl.const_pool[c.name_and_type_index-1].desc
+                                cl.set_field(name, DEFAULTS.get(desc, None))
+                                    
+                        # then run the initializers
+                        cl.handleStatic('<clinit>', '()V', frame)
                     frame.stack.append(cl.get_field(nat.name))
 
                 #print(name)
@@ -640,7 +651,9 @@ class Machine:
                     cl = self.class_files[name]
                     if not cl.static_initialized:
                         cl.static_initialized = True
-                        cl.handleMethod('<clinit>', '()V', frame, code, self, ip)
+                                    
+                        # run the initializers
+                        cl.handleStatic('<clinit>', '()V', frame)
                     cl.set_field(nat.name, frame.stack.pop())
             elif inst == Inst.GETFIELD:
                 index = read_unsigned_short(frame)

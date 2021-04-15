@@ -25,6 +25,10 @@ kb = KeyBindings()
 @kb.add('q')
 def exit_(event):
     event.app.exit()
+
+@kb.add('c-c')
+def exit_(event):
+    event.app.exit()
     
 @kb.add('g', 'g')
 def goto_start_(event):
@@ -124,7 +128,7 @@ for i,l in enumerate(LAYOUT_STACK):
 layout = Layout(HSplit([
     Label(text='UP/DOWN: step to the previous/next instruction'),
     Label(text='gg/GG: go to the start/end of the execution'),
-    Label(text='q: exit'),
+    Label(text='q or CTRL-c: exit'),
     Label(text='\nPress ENTER to start')
 ]))
 app = Application(key_bindings=kb, layout=layout, full_screen=True)
