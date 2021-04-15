@@ -59,7 +59,7 @@ class ClassFile(JavaClass):
                 newCode = CodeAttr().from_reader(io.BytesIO(newCode))
                 newFrame = Frame(newCode, m, self, frame.machine)
 
-                for i in range(argumentCount(desc)):
+                for i in range(argumentCount(desc))[::-1]:
                     newFrame.set_local(i, frame.stack.pop())
 
                 ret = frame.machine.execute_code(newFrame)

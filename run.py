@@ -179,7 +179,11 @@ for i in range(0, len(frames), 14):
 
 # start the JVM and record the Layout at each step
 print(f'Recording the execution of {method}...')
-stdout = jvm.call_function(method, arguments)
+ERROR = False
+try:
+    stdout = jvm.call_function(method, arguments)
+except:
+    ERROR = True
 
 if not LAYOUT_STACK:
     print('Something went wrong during the execution')
@@ -187,8 +191,15 @@ if not LAYOUT_STACK:
 
 # overwrite the first textbox of each Layout object to show the number of steps
 for i,l in enumerate(LAYOUT_STACK):
-    l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].content.buffer.text = f'Step {i+1}/{len(LAYOUT_STACK)}'
-
+    if ERROR:
+        text = f'Step {i+1}/{len(LAYOUT_STACK)} [WARNING: PARTIAL EXECUTION]'
+        style = 'class:text-area fg:red'
+    else:
+        text = f'Step {i+1}/{len(LAYOUT_STACK)}'
+        style = 'class:text-area'
+        
+    l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].content.buffer.text = text
+    l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].style = style
 
 # create and start the application (will replay the recorded execution)
 layout = LAYOUT_STACK[EXECUTION_INDEX]
