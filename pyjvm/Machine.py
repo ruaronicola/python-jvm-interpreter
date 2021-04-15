@@ -150,7 +150,7 @@ def parse_opcode_at(frame, ip):
         natIndex = methodRef.name_and_type_index
         nat = frame.current_class.const_pool[natIndex - 1]
         
-        return f'{ip}: {op.name} {index}  // {name}.{nat.name}{nat.desc}', ip+3
+        return f'{ip}: {op.name} {index}  // {name}.{nat.name}:{nat.desc}', ip+3
     
     elif op in [Inst.LDC2_W, Inst.ANEWARRAY, Inst.GETSTATIC, Inst.PUTSTATIC, Inst.GETFIELD, Inst.PUTFIELD, Inst.NEW]: # read_unsigned_short
         return f'{ip}: {op.name} {struct.unpack("!H", code[ip+1:ip+3])[0]}', ip+3
@@ -481,7 +481,7 @@ class Machine:
                             HSplit([
                                 TextArea(text=f'NUMSTEPS'),
                                 Label(text=f'Class: {frame.current_class.name()}'),
-                                Label(text=f'Method: {frame.current_method.name+frame.current_method.desc}'),
+                                Label(text=f'Method: {frame.current_class.name()}.{frame.current_method.name}:{frame.current_method.desc}'),
                             ], height=3),
                             title='Context',
                         ),
