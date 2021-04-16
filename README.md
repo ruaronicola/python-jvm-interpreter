@@ -1,12 +1,16 @@
-# JVM state visualization
+# JVM state visualizer
 Simple extension of `python-jvm-interpreter` that allows to single step through a Java function and inspect the JVM state (local variable stack and operand stack).
 
 Usage:
+
 `./run.py </path/to/.java file> <class> <method> [<python repr(arguments)>]`
 
 Examples:
+
 `./run.py example/Array.java ArrayTest sum '[1, 2, 3, 4]'`
+
 `./run.py example/Simple.java Simple main '[]'`
+
 `./run.py example/Hello.java Hello main '[]'`
 
 # JVM implementation in Python
