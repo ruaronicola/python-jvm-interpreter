@@ -3,6 +3,7 @@
 import ast
 import sys
 import subprocess
+import logging
 
 from asyncio import get_event_loop
 
@@ -17,6 +18,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.application import get_app
 from prompt_toolkit import prompt
 
+log = logging.getLogger(__name__)
 
 # create the key bindings for prompt_toolkit
 EXECUTION_INDEX = 0
@@ -110,7 +112,6 @@ def step_next_(event):
     if EXECUTION_INDEX < len(LAYOUT_STACK)-1:
         EXECUTION_INDEX += 1
         event.app.layout = LAYOUT_STACK[EXECUTION_INDEX]
-
     
 # parse arguments
 # if len(sys.argv) != 4:
@@ -121,7 +122,7 @@ def step_next_(event):
 # arguments = ast.literal_eval(sys.argv[3])
 
 if len(sys.argv) < 4:
-    print(f'Usage: {sys.argv[0]} <.java file> <class> <method> [<python repr(arguments)>]')
+    log.error(f'Usage: {sys.argv[0]} <.java file> <class> <method> [<python repr(arguments)>]')
     exit(1)
 java_file = sys.argv[1]
 class_name = sys.argv[2]
@@ -137,7 +138,7 @@ try:
     java_basename = java_file.split('/')[-1]
     class_file = java_file.replace(java_basename, f'{class_name}.class')
 except subprocess.CalledProcessError:
-    print(f'Failed to compile {java_file}')
+    log.error(f'Failed to compile {java_file}')
     exit(1)
     
 with open(java_file, 'r') as f:
@@ -178,15 +179,16 @@ for i in range(0, len(frames), 14):
 
 
 # start the JVM and record the Layout at each step
-print(f'Recording the execution of {method}...')
+log.info(f'Recording the execution of {method}...')
 ERROR = False
 try:
     stdout = jvm.call_function(method, arguments)
-except:
+except Exception as e:
+    log.exception('Something went wrong during the execution')
     ERROR = True
 
 if not LAYOUT_STACK:
-    print('Something went wrong during the execution')
+    log.error('There\'s nothing to replay. Aborting now...')
     exit(1)
 
 # overwrite the first textbox of each Layout object to show the number of steps
@@ -197,7 +199,7 @@ for i,l in enumerate(LAYOUT_STACK):
     else:
         text = f'Step {i+1}/{len(LAYOUT_STACK)}'
         style = 'class:text-area'
-        
+
     l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].content.buffer.text = text
     l.container.children[0].children[0].children[0].children[2].children[1].get_container().children[0].style = style
 
@@ -205,4 +207,5 @@ for i,l in enumerate(LAYOUT_STACK):
 layout = LAYOUT_STACK[EXECUTION_INDEX]
 
 app = Application(key_bindings=kb, layout=layout, full_screen=True)
+app.output.show_cursor = lambda:None
 app.run()

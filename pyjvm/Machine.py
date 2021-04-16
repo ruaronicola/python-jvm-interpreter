@@ -3,8 +3,8 @@ from .CodeAttr import CodeAttr
 from .Frame import Frame
 
 from prompt_toolkit.widgets import Frame as PTFrame, TextArea, Label
-from prompt_toolkit.layout.containers import VSplit, HSplit, Window
-from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.containers import VSplit, HSplit, Window, ScrollOffsets
+from prompt_toolkit.layout import Layout, ScrollablePane
 
 import struct
 import io
@@ -540,14 +540,23 @@ class Machine:
         while True:
             inst = Inst(code[frame.ip])
             
-            operand_stack = []
+            operand_stack_layout = []
             i = 0
             for v in frame.stack[::-1]:
-                operand_stack += [Label(f'TOS: {v}' if i == 0 else f'     {v}')]
+                operand_stack_layout += [Label(f'TOS: {v}' if i == 0 else f'     {v}')]
                 i += 1
                 if isinstance(v, (np.longlong, np.double)):
-                    operand_stack += [Label('')]
+                    operand_stack_layout += [Label('')]
                     i += 1
+                    
+            code_layout = []
+            focused_element = None
+            for ip, insn in parsed_code.items():
+                if ip==frame.ip:
+                    focused_element = Label(insn, style='bold fg:red')
+                    code_layout += [focused_element]
+                else:
+                    code_layout += [Label(insn)]
 
             container = HSplit([
                 VSplit([
@@ -561,9 +570,9 @@ class Machine:
                             title='Context',
                         ),
                         PTFrame(
-                            HSplit([
-                                Label(insn, style='bold fg:red' if ip==frame.ip else '') for ip, insn in parsed_code.items()
-                            ], height=len(parsed_code) or 1),
+                            ScrollablePane(HSplit(code_layout, height=len(parsed_code) or 1), 
+                                           scroll_offsets=ScrollOffsets(top=5, bottom=5),
+                                           show_scrollbar=False),
                             title='ByteCode',
                         ),
                     ]),
@@ -574,7 +583,7 @@ class Machine:
                             title='Local Variables Stack',
                         ),
                         PTFrame(
-                            HSplit(operand_stack, height=len(operand_stack) or 1),
+                            HSplit(operand_stack_layout, height=len(operand_stack_layout) or 1),
                             title='Operands Stack',
                         )
                     ])
@@ -584,7 +593,9 @@ class Machine:
             ])
 
             global LAYOUT_STACK
-            LAYOUT_STACK += [Layout(container)]
+            
+            layout = Layout(container=container, focused_element=focused_element)
+            LAYOUT_STACK += [layout]
             
             #print(frame.ip, inst.name)
 
