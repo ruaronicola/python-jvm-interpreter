@@ -15,7 +15,7 @@ Python. It works by parsing and interpreting the Java Class files.
 ## Dependencies
 In order to compile Java code to Java Bytecode, you will need to have
 `javac`. If you just want to run bytecode that is already compiled, all you need
-is a Python interpreter.
+is a Python interpreter and the required packages in `requirements.txt`.
 
 ## Running the tests
 The project comes with a number of unit tests. If you run the shell script

@@ -1,0 +1,2 @@
+numpy==1.19.5
+prompt-toolkit==3.0.18
