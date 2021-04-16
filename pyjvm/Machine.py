@@ -728,11 +728,12 @@ class Machine:
                         cl.static_initialized = True
                         
                         # first parse and initialize all existing static fields
-                        for c in cl.const_pool:
-                            if c.tag and c.tag.name == 'FIELDREF':
-                                name = cl.const_pool[c.name_and_type_index-1].name
-                                desc = cl.const_pool[c.name_and_type_index-1].desc
-                                cl.set_field(name, DEFAULTS.get(desc, None))
+                        if isinstance(cl, ClassFile):
+                            for c in cl.const_pool:
+                                if c.tag and c.tag.name == 'FIELDREF':
+                                    name = cl.const_pool[c.name_and_type_index-1].name
+                                    desc = cl.const_pool[c.name_and_type_index-1].desc
+                                    cl.set_field(name, DEFAULTS.get(desc, None))
                                     
                         # then run the initializers
                         cl.handleStatic('<clinit>', '()V', frame)

@@ -12,8 +12,11 @@ class String(JavaClass):
         super().handleMethod(name, desc, frame)
         if name == 'length':
             val = frame.pop()
+            frame.stack.pop()
             return len(val)
         elif name == 'charAt':
             index = frame.pop()
             s = frame.pop()
+            frame.stack.pop()
             return s[index]
+        

@@ -4,11 +4,12 @@ Simple extension of `python-jvm-interpreter` that allows to single step through 
 Usage:
 `./run.py </path/to/.java file> <class> <method> [<python repr(arguments)>]`
 
-Example:
+Examples:
 `./run.py example/Array.java ArrayTest sum '[1, 2, 3, 4]'`
+`./run.py example/Simple.java Simple main '[]'`
+`./run.py example/Hello.java Hello main '[]'`
 
 # JVM implementation in Python
-
 _python-jvm-interpreter_ is an implementation of the Java Virtual Machine in
 Python. It works by parsing and interpreting the Java Class files.
 
