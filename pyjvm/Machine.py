@@ -18,6 +18,7 @@ LAYOUT_STACK = []
 
 
 class Inst(Enum):
+    ACONST_NULL     = 0x01
     ICONST_M1     = 0x02
     ICONST_0      = 0x03
     ICONST_1      = 0x04
@@ -226,6 +227,10 @@ def opcode(inst):
         return fn
 
     return inner
+
+@opcode(Inst.ACONST_NULL)
+def aconst_null(frame):
+    frame.push(None)
 
 @opcode(Inst.ICONST_M1)
 def iconst_m1(frame):
