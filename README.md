@@ -19,6 +19,12 @@ More examples: (see the `examples/more` folder)
 
 `./run.py examples/more/Array.java ArrayTest sum '[1, 2, 3, 4]'`
 
+# Execution View
+![Execution View](resources/execution_view.png)
+
+# Constant Pool View
+![Constant Pool View](resources/constant_pool_view.png)
+
 # JVM implementation in Python
 _python-jvm-interpreter_ is an implementation of the Java Virtual Machine in
 Python. It works by parsing and interpreting the Java Class files.
