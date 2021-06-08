@@ -1,5 +1,5 @@
 # JVM state visualizer
-Simple extension of `python-jvm-interpreter` that allows to single step through a Java function and inspect the JVM state (local variable stack and operand stack).
+Simple extension of `python-jvm-interpreter` that allows to single step through (forward and backward) a Java function and inspect the JVM state (local variable stack and operand stack).
 
 Usage:
 
