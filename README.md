@@ -5,13 +5,19 @@ Usage:
 
 `./run.py </path/to/.java file> <class> <method> [<python repr(arguments)>]`
 
-Examples:
+Examples from the Runtime Systems (CS263) class:
+
+`./run.py examples/example1.java Simple main '[]'`
+
+`./run.py examples/example2.java Hello main '[]'`
+
+`./run.py examples/example3.java test main '[]'`
+
+`./run.py examples/handout.java Simple main '[]'`
+
+More examples: (see the `examples/more` folder)
 
 `./run.py example/Array.java ArrayTest sum '[1, 2, 3, 4]'`
-
-`./run.py example/Simple.java Simple main '[]'`
-
-`./run.py example/Hello.java Hello main '[]'`
 
 # JVM implementation in Python
 _python-jvm-interpreter_ is an implementation of the Java Virtual Machine in
