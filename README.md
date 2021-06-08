@@ -17,7 +17,7 @@ Examples from the Runtime Systems (CS263) class:
 
 More examples: (see the `examples/more` folder)
 
-`./run.py example/Array.java ArrayTest sum '[1, 2, 3, 4]'`
+`./run.py examples/more/Array.java ArrayTest sum '[1, 2, 3, 4]'`
 
 # JVM implementation in Python
 _python-jvm-interpreter_ is an implementation of the Java Virtual Machine in
