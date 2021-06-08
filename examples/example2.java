@@ -1,4 +1,4 @@
- public class Hello {
+class Hello {
 	int field1;
 	int getFieldVal() { return field1; } 
 	public static void main(String args[]) {
