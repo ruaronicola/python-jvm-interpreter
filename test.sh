@@ -1,5 +1,5 @@
 #!/bin/sh
-cd example
+cd examples
 rm *.class
 javac --release 8 *.java
 cd ..

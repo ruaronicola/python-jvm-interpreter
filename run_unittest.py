@@ -7,7 +7,7 @@ class JVMTest(unittest.TestCase):
     def setUp(self):
         self.jvm = Machine()
         load_stdlib_classes(self.jvm)
-        self.jvm.load_class_file('example/IntegerTest.class')
+        self.jvm.load_class_file('examples/IntegerTest.class')
 
     def test_return_0(self):
         self.assertEqual(self.jvm
@@ -53,7 +53,7 @@ class StringTest(unittest.TestCase):
     def setUp(self):
         self.jvm = Machine()
         load_stdlib_classes(self.jvm)
-        self.jvm.load_class_file('example/StringTest.class')
+        self.jvm.load_class_file('examples/StringTest.class')
 
     def test_rot13_hello_world(self):
         self.assertEqual(self.jvm
@@ -68,7 +68,7 @@ class InstanceTest(unittest.TestCase):
     def setUp(self):
         self.jvm = Machine()
         load_stdlib_classes(self.jvm)
-        self.jvm.load_class_file('example/InstanceTest.class')
+        self.jvm.load_class_file('examples/InstanceTest.class')
 
     def test_single_instance(self):
         self.assertEqual(self.jvm
@@ -86,7 +86,7 @@ class ArrayTest(unittest.TestCase):
     def setUp(self):
         self.jvm = Machine()
         load_stdlib_classes(self.jvm)
-        self.jvm.load_class_file('example/ArrayTest.class')
+        self.jvm.load_class_file('examples/ArrayTest.class')
 
     def test_insertion_sort(self):
         l = [4, 3, 5, 1]
